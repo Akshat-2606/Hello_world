@@ -1,4 +1,4 @@
 name = 'icy-mountain-4eaa'
-main = "helloworld-worker/index.js"
+main = "worker/index.js"
 compatibility_date = "2025-08-25"
-type = "javascript"
+
