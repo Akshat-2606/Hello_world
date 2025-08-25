@@ -1,12 +1,93 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hello World</title>
+  <meta charset="UTF-8">
+  <title>EndureAir Wiki</title>
+  <style>
+    body {
+      margin: 0;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #1e3c72, #2a5298);
+      color: #333;
+    }
+    button {
+      background: #2a5298;
+      color: #fff;
+      border: none;
+      padding: 0.6rem 1.2rem;
+      border-radius: 0.5rem;
+      cursor: pointer;
+      font-size: 1rem;
+      margin-top: 1rem;
+      transition: background 0.3s;
+    }
+    button:hover {
+      background: #1e3c72;
+    }
+    #wiki-content {
+      display: none;
+      width: 90%;
+      height: 80vh;
+      margin-top: 2rem;
+      border: 2px solid #fff;
+      border-radius: 1rem;
+    }
+  </style>
+  <script src="https://cdn.auth0.com/js/auth0-spa-js/1.31/auth0-spa-js.production.js"></script>
 </head>
 <body>
-    <h1>Hello World!</h1>
-    <p>Welcome to my first Cloudflare Pages site.</p>
+  <h2>🔐 EndureAir Wiki Access</h2>
+  <div id="content"></div>
+  <iframe id="wiki-content" src="https://hello-world.pages.dev"></iframe>
+
+  <script>
+    let auth0 = null;
+
+    async function initAuth0() {
+      auth0 = await createAuth0Client({
+        domain: "YOUR_AUTH0_DOMAIN",
+        client_id: "YOUR_CLIENT_ID",
+        redirect_uri: window.location.origin
+      });
+
+      // Handle redirect after login
+      if (window.location.search.includes("code=") && window.location.search.includes("state=")) {
+        await auth0.handleRedirectCallback();
+        window.history.replaceState({}, document.title, "/");
+      }
+
+      const isAuthenticated = await auth0.isAuthenticated();
+
+      if (isAuthenticated) {
+        const user = await auth0.getUser();
+        document.getElementById("content").innerHTML =
+          `Welcome ${user.name}! <button onclick="logout()">Logout</button>`;
+        document.getElementById("wiki-content").style.display = "block"; // show wiki
+      } else {
+        document.getElementById("content").innerHTML =
+          `<button onclick="login()">Login with Microsoft 365</button>`;
+      }
+    }
+
+    async function login() {
+      await auth0.loginWithRedirect({
+        connection: "YOUR_AZURE_AD_CONNECTION_NAME" // restricts login to corporate Microsoft 365
+      });
+    }
+
+    async function logout() {
+      auth0.logout({ returnTo: window.location.origin });
+      document.getElementById("wiki-content").style.display = "none";
+      document.getElementById("content").innerHTML =
+        `<button onclick="login()">Login with Microsoft 365</button>`;
+    }
+
+    window.onload = initAuth0;
+  </script>
 </body>
 </html>
