@@ -1,0 +1,4 @@
+name = "helloworld-worker"
+main = "helloworld-worker/index.js"
+compatibility_date = "2025-08-25"
+type = "javascript"
