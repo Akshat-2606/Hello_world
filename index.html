@@ -1,93 +1,118 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>EndureAir Wiki</title>
-  <style>
-    body {
-      margin: 0;
-      height: 100vh;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: linear-gradient(135deg, #1e3c72, #2a5298);
-      color: #333;
+export default {
+  async fetch(request, env, ctx) {
+    const url = new URL(request.url);
+
+    // --- Username-password mapping ---
+    const users = {
+      "Pratham": "EA168",
+      "Azhar": "EA191",
+      "Akshat": "T017",
+      "dave": "dave321",
+      "eve": "eve654",
+      "frank": "frank987",
+      "grace": "grace111",
+      "heidi": "heidi222",
+      "ivan": "ivan333",
+      "judy": "judy444"
+    };
+
+    // Get submitted username and password
+    const username = url.searchParams.get("username");
+    const password = url.searchParams.get("password");
+
+    // Check if the credentials are correct
+    const isCorrect = username && password && users[username] === password;
+
+    // Determine if this was a wrong attempt
+    const wrongAttempt = (username || password) && !isCorrect;
+
+    // --- Show login form if no credentials or wrong credentials ---
+    if (!isCorrect) {
+      return new Response(`
+        <html>
+          <head>
+            <title>EndureAir Wiki</title>
+            <style>
+              body {
+                margin: 0;
+                height: 100vh;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                background: linear-gradient(135deg, #1e3c72, #2a5298);
+                color: #333;
+              }
+              .card {
+                background: #fff;
+                padding: 2rem;
+                border-radius: 1rem;
+                box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+                max-width: 450px;
+                text-align: center;
+                position: relative;
+              }
+              h2 {
+                margin-bottom: 1rem;
+                color: #2a5298;
+              }
+              input {
+                width: 80%;
+                padding: 0.6rem;
+                margin-bottom: 1rem;
+                border: 1px solid #ccc;
+                border-radius: 0.5rem;
+                font-size: 1rem;
+              }
+              button {
+                background: #2a5298;
+                color: #fff;
+                border: none;
+                padding: 0.6rem 1.2rem;
+                border-radius: 0.5rem;
+                cursor: pointer;
+                font-size: 1rem;
+                transition: background 0.3s;
+              }
+              button:hover {
+                background: #1e3c72;
+              }
+              .warning {
+                margin-top: 1rem;
+                padding: 0.8rem;
+                border-radius: 0.5rem;
+                font-weight: bold;
+                animation: warningPulse 2s infinite;
+              }
+              @keyframes warningPulse {
+                0%   { background: #ff0000; color: white; }
+                25%  { background: #ff8800; color: black; }
+                50%  { background: #ffff00; color: black; }
+                75%  { background: #ff8800; color: black; }
+                100% { background: #ff0000; color: white; }
+              }
+            </style>
+          </head>
+          <body>
+            <div class="card">
+              <h2>EndureAir Wiki Login</h2>
+              <form method="GET">
+                <input type="text" name="username" placeholder="Enter username" autocomplete="off" spellcheck="false" /><br>
+                <input type="password" name="password" placeholder="Enter password" autocomplete="off" spellcheck="false" /><br>
+                <button type="submit">Unlock</button>
+              </form>
+              ${
+                wrongAttempt
+                  ? `<div class="warning"> Bombers approaching... Access Denied!</div>`
+                  : ""
+              }
+            </div>
+          </body>
+        </html>
+      `, { headers: { "content-type": "text/html" } });
     }
-    button {
-      background: #2a5298;
-      color: #fff;
-      border: none;
-      padding: 0.6rem 1.2rem;
-      border-radius: 0.5rem;
-      cursor: pointer;
-      font-size: 1rem;
-      margin-top: 1rem;
-      transition: background 0.3s;
-    }
-    button:hover {
-      background: #1e3c72;
-    }
-    #wiki-content {
-      display: none;
-      width: 90%;
-      height: 80vh;
-      margin-top: 2rem;
-      border: 2px solid #fff;
-      border-radius: 1rem;
-    }
-  </style>
-  <script src="https://cdn.auth0.com/js/auth0-spa-js/1.31/auth0-spa-js.production.js"></script>
-</head>
-<body>
-  <h2>🔐 EndureAir Wiki Access</h2>
-  <div id="content"></div>
-  <iframe id="wiki-content" src="https://hello-world.pages.dev"></iframe>
 
-  <script>
-    let auth0 = null;
-
-    async function initAuth0() {
-      auth0 = await createAuth0Client({
-        domain: "dev-8klgyetfxx4w1xnd.us.auth0.com",
-        client_id: "oStTIQbZQu1q1gN5ErI9ILTflQbOQXbY",
-        redirect_uri: window.location.origin
-      });
-
-      // Handle redirect after login
-      if (window.location.search.includes("code=") && window.location.search.includes("state=")) {
-        await auth0.handleRedirectCallback();
-        window.history.replaceState({}, document.title, "/");
-      }
-
-      const isAuthenticated = await auth0.isAuthenticated();
-
-      if (isAuthenticated) {
-        const user = await auth0.getUser();
-        document.getElementById("content").innerHTML =
-          `Welcome ${user.name}! <button onclick="logout()">Logout</button>`;
-        document.getElementById("wiki-content").style.display = "block"; // show wiki
-      } else {
-        document.getElementById("content").innerHTML =
-          `<button onclick="login()">Login with Microsoft 365</button>`;
-      }
-    }
-
-    async function login() {
-      await auth0.loginWithRedirect({
-        connection: "YOUR_AZURE_AD_CONNECTION_NAME" // restricts login to corporate Microsoft 365
-      });
-    }
-
-    async function logout() {
-      auth0.logout({ returnTo: window.location.origin });
-      document.getElementById("wiki-content").style.display = "none";
-      document.getElementById("content").innerHTML =
-        `<button onclick="login()">Login with Microsoft 365</button>`;
-    }
-
-    window.onload = initAuth0;
-  </script>
-</body>
-</html>
+    // --- If credentials are correct, redirect to wiki ---
+    return fetch("https://hello-world.pages.dev"); // replace with your actual wiki URL
+  }
+}
